@@ -28,7 +28,9 @@
                 <td>{{title}}</td>
                 <td>{{fmt_price price}}</td>
                 <td>{{authors}}</td>
+                <td><button class="btn btn-primary" index={{@index}}>도서정보</button></td>
             </tr>
+            <%-include("modal.ejs")%>
         {{/each}}
     </table>
 </script>
@@ -49,6 +51,12 @@
     let page = 1;
 
     getBooks();
+
+    // 도서정보 버튼을 클릭했을 때
+    $("#div_books").on("click", "button", function() {
+        let index = $(this).attr("index");
+        $("#modal" + index).modal("show");
+    });
 
     $(frm).on('submit', function(e) { // name으로 선택할 때는 아무것도 안 붙이면 됨.(id: #, class: .)
         e.preventDefault();
@@ -84,7 +92,6 @@
                 size: 5
             },
             success: function(data) {
-                console.log(data);
                 let templ = Handlebars.compile($('#templ_books').html());
                 $('#div_books').html(templ(data));
 

@@ -21,3 +21,7 @@ a {
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
 }
+
+#div_books img {
+  cursor: pointer;
+}

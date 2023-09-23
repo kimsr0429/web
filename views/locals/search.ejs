@@ -1,0 +1,124 @@
+<div class="row my-5">
+    <div class="col">
+        <h1 class="text-center"><%=title%></h1>
+        <!-- 검색폼 -->
+        <div class="row justify-content-end mb-2">
+            <form name="frm" class="col-6 col-md-4 col-lg-3">
+                <div class="input-group">
+                    <input name="query" class="form-control" value="인천 버거킹">
+                    <button class="btn btn-primary">검색</button>
+                </div>
+            </form>
+        </div>
+        <div id="div_locals"></div>
+        <!-- 페이지 이동 버튼 -->
+        <div class="text-center">
+            <button id="prev" class="btn btn-primary">이전</button>
+            <span id="span_page" class="mx-3"></span>
+            <button id="next" class="btn btn-primary">다음</button>
+        </div>
+        <div id="map" style="width:100%;height:400px;" class="my-5"></div>
+    </div>
+</div>
+
+<!-- 템플릿 -->
+<script type="x-handlebars-template" id="templ_locals">
+    <table class="table table-striped">
+        {{#each documents}}
+            <tr>
+                <td class="place">{{place_name}}</td>
+                <td>{{address_name}}</td>
+                <td class="phone">{{phone}}</td>
+                <td><button class="btn btn-primary" x="{{x}}" y="{{y}}">위치보기</button></td>
+            </tr>
+        {{/each}}
+    </table>
+</script>
+
+<script>
+    let query = $(frm.query).val();
+    let page = 1;
+    let size = 5;
+
+    getLocals();
+
+    // 위치보기 버튼 눌렀을 때
+    $('#div_locals').on('click', 'button', function() {
+        let x = $(this).attr('x');
+        let y = $(this).attr('y');
+
+        var container = document.getElementById('map');
+        var options = {
+            center: new kakao.maps.LatLng(y, x),
+            level: 3
+        };
+
+        var map = new kakao.maps.Map(container, options);
+
+        // 마커가 표시될 위치입니다 
+        var markerPosition  = new kakao.maps.LatLng(y, x); 
+
+        // 마커를 생성합니다
+        var marker = new kakao.maps.Marker({
+            position: markerPosition
+        });
+
+        // 마커가 지도 위에 표시되도록 설정합니다
+        marker.setMap(map);
+
+        let row = $(this).parent().parent();
+        let place = row.find(".place").text();
+        let phone = row.find(".phone").text();
+        console.log(place, phone)
+        var str ="<div style='padding:5px;font-size:12px;'>" + place + "<br>" + phone + "</div>";
+        var info=new kakao.maps.InfoWindow({ content:str });
+        kakao.maps.event.addListener(marker, "mouseover", function() { 
+            info.open(map, marker); 
+        });
+        kakao.maps.event.addListener(marker, "mouseout", function() {
+            info.close(map, marker); 
+        });
+    });
+
+    $(frm).on("submit", function(e) {
+       e.preventDefault();
+
+       query = $(frm.query).val();
+       page = 1;
+
+       getLocals();
+    });
+
+    $('#prev').on('click', function() {
+        page--;
+        getLocals();
+    });
+    
+    $('#next').on('click', function() {
+        page++;
+        getLocals();
+    });
+
+    function getLocals() {
+        $.ajax({
+            type: 'GET',
+            url: 'https://dapi.kakao.com/v2/local/search/keyword.json',
+            headers: {'Authorization': 'KakaoAK 1e68e001234e37ddd229e2613b196f6e'},
+            data: {
+                'query': query,
+                'page': page,
+                'size': size
+            },
+            success: function(data) {
+                let templ = Handlebars.compile($('#templ_locals').html());
+                $('#div_locals').html(templ(data));
+
+                let last = Math.ceil(data.meta.pageable_count / size);
+                $('#span_page').html(page + '/' + last);
+
+                (page == 1) ? $('#prev').attr('disabled', true) : $('#prev').attr('disabled', false);
+                (data.meta.is_end) ? $('#next').attr('disabled', true) : $('#next').attr('disabled', false);
+            }
+        });
+    }
+</script>
