@@ -30,6 +30,7 @@
                 </div>
                 <div class="card-footer">
                     {{fmt_price price}}
+                    <i class="bi bi-bag-plus-fill float-end" book="{{book @this}}"></i>
                 </div>
             </div>
         </div>
@@ -46,6 +47,10 @@
     Handlebars.registerHelper('fmt_price', function(price) {
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
     });
+
+    Handlebars.registerHelper("book", function(book) {
+        return JSON.stringify(book); // object to string
+    });
 </script>
 
 <script>
@@ -53,6 +58,18 @@
     let page = 1;
 
     getBooks();
+
+    // 장바구니를 클릭한 경우
+    $("#div_books").on("click", ".bi-bag-plus-fill", function() {
+        if(!sessionStorage.getItem("email") && !sessionStorage.getItem("uid")) {
+            alert("로그인이 필요한 서비스입니다.");
+            location.href = "/users/login";
+        } else {
+            // 장바구니에 등록
+            const book = JSON.parse($(this).attr("book"));
+            console.log(book);
+        }
+    });
 
     // 이미지를 클릭한 경우
     $("#div_books").on("click", "img", function() {

@@ -25,3 +25,13 @@ a {
 #div_books img {
   cursor: pointer;
 }
+
+form span {
+  width: 100px;
+}
+
+#div_books .bi-bag-plus-fill {
+  cursor: pointer;
+  color: green;
+  font-size: 1.5rem;
+}
