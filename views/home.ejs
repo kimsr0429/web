@@ -30,7 +30,7 @@
                 </div>
                 <div class="card-footer">
                     {{fmt_price price}}
-                    <i class="bi bi-bag-plus-fill float-end" book="{{book @this}}"></i>
+                    <i class="cart bi bi-bag-plus-fill float-end" book="{{book @this}}"></i>
                 </div>
             </div>
         </div>
@@ -53,21 +53,34 @@
     });
 </script>
 
-<script>
+<script type="module"> // type="module" 시험에 나옴
+    import { app } from "/javascripts/firebase.js"
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+    const db = getDatabase(app); // app 시험에 나옴
+
     let query = $(frm.query).val();
     let page = 1;
 
     getBooks();
 
-    // 장바구니를 클릭한 경우
-    $("#div_books").on("click", ".bi-bag-plus-fill", function() {
-        if(!sessionStorage.getItem("email") && !sessionStorage.getItem("uid")) {
-            alert("로그인이 필요한 서비스입니다.");
+    // 장바구니 아이콘을 클릭한 경우
+    $("#div_books").on("click", ".cart", async function() {
+        if(!sessionStorage.getItem("uid") && !sessionStorage.getItem("email")) {
+            alert("로그인이 필요한 서비스입니다.\n로그인 페이지로 이동합니다.")
             location.href = "/users/login";
         } else {
-            // 장바구니에 등록
-            const book = JSON.parse($(this).attr("book"));
-            console.log(book);
+            // 장바구니에 있는지 체크
+            const book = JSON.parse($(this).attr("book")); // JSON.parse($(this).attr("book")) 시험에 나올 수 있음
+            const ref_cart = ref(db, `cart/${sessionStorage.getItem("uid")}/${book.isbn}`);
+            const result = await get(ref_cart);
+            
+            if(result.val()) {
+                alert("이미 장바구니에 있습니다.")
+            } else {
+                if(!confirm("장바구니에 추가하시겠습니까?")) return;
+                set(ref_cart, book);
+                alert("장바구니에 추가되었습니다.");
+            }
         }
     });
 
