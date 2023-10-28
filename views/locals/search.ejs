@@ -29,21 +29,51 @@
                 <td class="place">{{place_name}}</td>
                 <td>{{address_name}}</td>
                 <td class="phone">{{phone}}</td>
-                <td><button class="btn btn-primary" x="{{x}}" y="{{y}}">위치보기</button></td>
+                <td><button class="btn btn-primary location" x="{{x}}" y="{{y}}">위치보기</button></td>
+                <td><button class="btn btn-primary btn-sm favorite" local="{{toString @this}}">즐겨찾기</button></td>
             </tr>
         {{/each}}
     </table>
 </script>
 
 <script>
+    Handlebars.registerHelper("toString", function(local) {
+        return JSON.stringify(local);
+    });
+</script>
+
+<script type="module">
+    import { app } from "/javascripts/firebase.js"
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+    const db = getDatabase(app);
+
     let query = $(frm.query).val();
     let page = 1;
     let size = 5;
 
     getLocals();
 
+    // 즐겨찾기 버튼 눌렀을 때
+    $("#div_locals").on("click", ".favorite", async function() { // async/await 기말에 나옴
+        if(sessionStorage.getItem("uid")) {
+            const local = JSON.parse($(this).attr("local"));
+            const ref_favorite = ref(db, `favorite/${sessionStorage.getItem("uid")}/${local.id}`);
+            const snapshot = await get(ref_favorite);
+            console.log(snapshot.val());
+            if(snapshot.val()) {
+                alert("즐겨찾기에 이미 등록되었습니다.");
+            } else {
+                await set(ref_favorite, local);
+                alert("즐겨찾기에 등록되었습니다.");
+            }
+        } else {
+            sessionStorage.setItem("target", "/locals");
+            location.href="/users/login";
+        }
+    });
+
     // 위치보기 버튼 눌렀을 때
-    $('#div_locals').on('click', 'button', function() {
+    $('#div_locals').on('click', '.location', function() {
         let x = $(this).attr('x');
         let y = $(this).attr('y');
 
@@ -69,7 +99,7 @@
         let row = $(this).parent().parent();
         let place = row.find(".place").text();
         let phone = row.find(".phone").text();
-        console.log(place, phone)
+        
         var str ="<div style='padding:5px;font-size:12px;'>" + place + "<br>" + phone + "</div>";
         var info=new kakao.maps.InfoWindow({ content:str });
         kakao.maps.event.addListener(marker, "mouseover", function() { 
