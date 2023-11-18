@@ -1,0 +1,37 @@
+<div class="my-5">
+    <h1 class="text-center mb-5"><%=title%></h1>
+    <div id="btn_group" class="text-end mb-2" style="display: none;">
+        <button class="btn btn-success btn-sm">수정</button>
+        <button class="btn btn-danger btn-sm">삭제</button>
+    </div>
+    <div id="div_post"></div>
+</div>
+
+<script id="templ_post" type="x-handlebars-template">
+    <div class="card">
+        <div class="card-body">
+            <h5>{{title}}</h5>
+            <hr/>
+            <div>{{body}}</div>
+        </div>
+        <div class="card-footer  d-flex">
+            <small>{{email}}</small>
+            <small class="ms-auto">{{date}}</small>
+        </div>
+    </div>
+</script>
+
+<script type="module">
+    import { app } from "/javascripts/firebase.js";
+    import { getFirestore, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getStorage, uploadBytes, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
+    const db = getFirestore(app);
+    
+    const id = "<%=id%>";
+    const snapshot = await getDoc(doc(db, `posts/${id}`));
+    const post = snapshot.data();
+    const templ = Handlebars.compile($("#templ_post").html());
+    $("#div_post").html(templ(post));
+
+    if(sessionStorage.getItem("email") == post.email) $("#btn_group").show();
+</script>

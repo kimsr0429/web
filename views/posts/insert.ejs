@@ -1,13 +1,14 @@
 <div class="my-5">
     <h1 class="text-center mb-5"><%=title%></h1>
-    <form name="frm" class="card p-3">
-        <input name="title" placeholder="제목을 입력하세요." class="form-control mb-2"/>
-        <textarea name="body" rows="10" placeholder="내용을 입력하세요." class="form-control mb-3"></textarea>
-        <div class="text-center">
-            <button class="btn btn-primary px-4">등록</button>
+    <form name="frm">
+        <input name="title" placeholder="제목을 입력하세요." class="form-control mb-2">
+        <textarea name="body" placeholder="내용을 입력하세요." rows="10" class="form-control"></textarea>
+        <div class="text-center my-3">
+            <button type="submit" class="btn btn-primary px-4">등록</button>
             <button type="reset" class="btn btn-secondary px-4">취소</button>
         </div>
     </form>
+    <hr/>
 </div>
 
 <script type="module">
@@ -15,31 +16,26 @@
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     const db = getFirestore(app);
 
-    $(frm).on("submit", async function(e) {
+    $(".btn-primary").on("click", async function(e){
         e.preventDefault();
         const title = $(frm.title).val();
         const body = $(frm.body).val();
-
-        if(!title) {
-            alert("제목을 입력하세요");
+        if(!title){
+            alert("제목을 입력해주세요.");
             $(frm.title).focus();
-
             return;
         }
-        if(!body) {
-            alert("내용을 입력하세요");
+        if(!body){
+            alert("내용을 입력해주세요.");
             $(frm.body).focus();
-            
             return;
         }
-        if(confirm("새로운 게시글을 등록하시겠습니까?")) {
-            const date = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        if(confirm("등록하시겠습니까?")){
             const email = sessionStorage.getItem("email");
-            const data = {email, date, title, body};
-
-            await addDoc(collection(db, "posts"), data);
-            alert("새로운 글이 등록되었습니다.");
-
+            const date = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+            
+            await addDoc(collection(db, '/posts'), {date, email, title, body});
+            alert("등록이 완료되었습니다.");
             location.href = "/posts";
         }
     });
