@@ -1,0 +1,93 @@
+<div class="my-5">
+    <h2 class="text-center mb-">댓글</h2>
+    <div>
+        <div class="mb-2">
+            댓글수: <span><b id="total"></b></span>
+        </div>
+        <div id="div_comments"></div>
+    </div>
+    <div id="div_comment" class="mt-3" style="display: none;">
+    <textarea id="comment_body" class="form-control" rows="5" placeholder="내용을 입력하세요."></textarea>
+        <div class="text-end mt-2">
+            <button id="btn-insert" class="btn btn-primary btn-sm px-4">등록</button>
+        </div>
+    </div>
+    <div id="div_login" class="mt-3">
+        <button id="btn-login" class="btn btn-primary w-100">로그인</button>
+    </div>
+</div>
+
+<script id="templ_comments" type="x-handlebars-template">
+    {{#each .}}
+        <div class="card mb-2">
+            <div class="card-body">
+                <div>{{body}}</div>
+            </div>
+            <div class="card-footer d-flex">
+                <small>{{email}}</small>
+                <small class="ms-auto">{{date}}</small>
+                <div class="text-end ms-3" style="{{fn_button email}}">
+                    <button class="btn btn-success btn-sm">수정</button>
+                    <button class="btn btn-danger btn-sm">삭제</button>
+                </div>
+            </div>
+        </div>
+    {{/each}}
+</script>
+
+<script>
+    Handlebars.registerHelper("fn_button", function(email) {
+        if(sessionStorage.getItem("email") != email) {
+            return "display: none;"
+        }
+    });
+</script>
+
+<script type="module">
+    import { app } from "/javascripts/firebase.js";
+    import { getFirestore, collection, addDoc, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    const db = getFirestore(app);
+
+    const pid = "<%=id%>"
+    if(sessionStorage.getItem("uid")) {
+        $("#div_comment, #div_login").toggle();
+    }
+
+    $("#btn-login").on("click", function() {
+        sessionStorage.setItem("target", `/posts/read?pid=${pid}`)
+        location.href = "/users/login";
+    });
+
+    $("#btn-insert").on("click", async function() {
+        const body = $("#comment_body").val();
+        const date = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+        const email = sessionStorage.getItem("email"); 
+        const data = {pid, email, body, date};
+
+        if(!body) {
+            alert("댓글을 입력해주세요.");
+            $("#comment_body").focus();
+        } else {
+            await addDoc(collection(db, 'comments'), data);
+            $("#comment_body").val("");
+            getComments();
+        }
+    });
+
+    getComments();
+    async function getComments() {
+        const q = query(collection(db, 'comments'), where("pid", "==", pid), orderBy("date", "desc"));
+        const snapshot = await getDocs(q);
+        const total = snapshot.docs.length;
+        $("#total").html(total);
+
+        let rows = [];
+        snapshot.docs.forEach(doc => {
+            const data = {pid: doc.pid, ...doc.data()};
+            rows.push(data);
+        });
+
+        const templ = Handlebars.compile($("#templ_comments").html());
+        $("#div_comments").html(templ(rows));
+    }
+</script>
